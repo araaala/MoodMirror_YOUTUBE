@@ -1,45 +1,52 @@
-import React from "react";
-
 export default function Login() {
+  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+
   const handleLogin = () => {
-    // keep your existing login link here
-    window.location.href = "http://localhost:5000/auth/login";
+    window.location.href = `${API_BASE}/api/auth/login`;
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6
-      bg-gradient-to-r from-[#3fd49b] via-[#55b7ff] to-[#6a6aff]">
-      
-      {/* Glass card */}
-      <div className="w-full max-w-4xl rounded-3xl bg-white/15 backdrop-blur-xl
-        border border-white/20 shadow-2xl p-10 sm:p-14 text-center">
+    <div className="min-h-screen flex items-center justify-center
+      bg-gradient-to-br from-emerald-400 via-cyan-500 to-indigo-500">
 
-        {/* Logo placeholder */}
-        <div className="mb-6 flex justify-center">
-          {/* Replace this with your photo logo later */}
-          <img
-            src="/src/assets/moodmirror_logo.png"
-            alt="MoodMirror logo"
-            className="h-40 w-40 object-contain"
-          />
+      <div className="text-center max-w-xl px-6">
+        <img
+          src="/src/assets/moodmirror_logo.png"
+          alt="MoodMirror"
+          className="mx-auto h-40 mb-6"
+        />
 
-        </div>
-
-        <h1 className="text-4xl sm:text-6xl font-extrabold text-white drop-shadow">
-          Welcome to MoodMirror
+        <h1 className="text-5xl font-extrabold text-white drop-shadow mb-4">
+          MoodMirror
         </h1>
 
-        <p className="mt-4 text-white/80 text-base sm:text-lg">
-          Detect your mood and get a personalized playlist instantly 🎶
+        <p className="text-white/80 text-lg mb-10">
+          Login with YouTube to generate a playlist that matches your mood.
         </p>
 
         <button
           onClick={handleLogin}
-          className="mt-10 px-12 py-4 rounded-full font-bold text-lg
-            bg-[#1DB954] hover:bg-[#1ed760] text-black shadow-xl
-            transition active:scale-[0.98]"
+          className="
+            group px-12 py-4 rounded-full text-lg font-bold
+            bg-white text-black
+            shadow-xl transition-all duration-200
+            hover:bg-[#FF0000] hover:text-white
+            hover:shadow-[0_20px_40px_rgba(255,0,0,0.45)]
+            hover:scale-105
+            active:scale-95
+          "
         >
-          LOGIN
+          <span className="flex items-center justify-center gap-3">
+            {/* YouTube play icon */}
+            <svg
+              className="w-6 h-6 fill-black group-hover:fill-white transition"
+              viewBox="0 0 24 24"
+            >
+              <path d="M23.498 6.186a3.01 3.01 0 0 0-2.118-2.13C19.505 3.5 12 3.5 12 3.5s-7.505 0-9.38.556A3.01 3.01 0 0 0 .502 6.186 31.35 31.35 0 0 0 0 12a31.35 31.35 0 0 0 .502 5.814 3.01 3.01 0 0 0 2.118 2.13C4.495 20.5 12 20.5 12 20.5s7.505 0 9.38-.556a3.01 3.01 0 0 0 2.118-2.13A31.35 31.35 0 0 0 24 12a31.35 31.35 0 0 0-.502-5.814ZM9.75 15.5v-7l6 3.5-6 3.5Z" />
+            </svg>
+
+            Login with YouTube
+          </span>
         </button>
       </div>
     </div>

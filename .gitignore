@@ -1,0 +1,34 @@
+# ======================
+# Node
+# ======================
+node_modules/
+server/node_modules/
+
+# ======================
+# Python
+# ======================
+venv/
+.venv/
+pyservice/venv/
+pyservice/.venv/
+__pycache__/
+*.pyc
+
+# ======================
+# Environment variables
+# ======================
+.env
+server/.env
+client/.env
+
+# ======================
+# Build folders
+# ======================
+dist/
+build/
+
+# ======================
+# OS files
+# ======================
+.DS_Store
+Thumbs.db

@@ -4,11 +4,12 @@ from pydantic import BaseModel
 import base64
 import cv2
 import numpy as np
-
-from deepface import DeepFace  # ✅ DeepFace emotion recognition
+import requests
+from deepface import DeepFace
 
 app = FastAPI()
 
+# ✅ VERY IMPORTANT: allow ALL origins while developing
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -20,27 +21,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+
+# ================= MODELS =================
+
 class DetectRequest(BaseModel):
     imageBase64: str
+
+class RecommendRequest(BaseModel):
+    mood: str
+
+# ================= HEALTH =================
 
 @app.get("/health")
 def health():
     return {"status": "pyservice running"}
 
-def _parse_deepface_result(result):
-    """
-    DeepFace can return either:
-      - a dict
-      - a list of dicts
-    We normalize it to a single dict.
-    """
-    if isinstance(result, list) and len(result) > 0:
-        return result[0]
-    return result
-
+# ================= FACE DETECTION =================
 @app.post("/detect")
 def detect(req: DetectRequest):
-    # 1) Decode base64 image from client
+    import numpy as np
+
     b64 = req.imageBase64
     if "," in b64:
         b64 = b64.split(",", 1)[1]
@@ -50,52 +51,74 @@ def detect(req: DetectRequest):
     img_bgr = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
 
     if img_bgr is None:
-        return {"error": "Invalid image"}
+        return {
+            "detectedMood": "neutral",
+            "confidence": 0.4,
+            "source": "invalid-image",
+        }
 
-    # DeepFace expects RGB images typically
     img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
     try:
-        # 2) Analyze emotion with DeepFace
         result = DeepFace.analyze(
             img_path=img_rgb,
             actions=["emotion"],
-            enforce_detection=False,  # don't hard-fail if no face is found
+            enforce_detection=False,
         )
 
-        r = _parse_deepface_result(result)
+        if isinstance(result, list):
+            result = result[0]
 
-        dominant = r.get("dominant_emotion")
-        emotion_scores = r.get("emotion", {})  # emotion -> score (0-100)
+        dominant = result.get("dominant_emotion", "neutral")
+        emotions = result.get("emotion", {})
 
-        if not dominant or dominant not in emotion_scores:
-            # If DeepFace couldn't decide, fallback:
-            return {
-                "detectedMood": "neutral",
-                "confidence": 0.40,
-                "source": "deepface-unknown"
-            }
-
-        # 3) Confidence as 0-1
-        confidence = float(emotion_scores[dominant]) / 100.0
-
-        # 4) Map labels to match your UI naming
-        # DeepFace uses: happy, sad, angry, fear, disgust, surprise, neutral
-        label_map = {
-            "surprise": "surprised",
-        }
-        detected = label_map.get(dominant, dominant)
+        confidence = float(emotions.get(dominant, 40)) / 100.0
 
         return {
-            "detectedMood": detected,
-            "confidence": confidence,
-            "source": "deepface"
+            "detectedMood": str(dominant),     # ✅ string
+            "confidence": float(confidence),   # ✅ python float
+            "source": "deepface",
         }
 
-    except Exception as e:
-        # If DeepFace fails (install/model issues), return safe fallback
+    except Exception:
         return {
             "detectedMood": "neutral",
-            "confidence": 0.40,
-            "source": f"deepface-error: {str(e)[:120]}"
+            "confidence": 0.4,
+            "source": "deepface-error",
         }
+
+
+# ================= YOUTUBE RECOMMEND =================
+
+SERVER_BASE = "http://127.0.0.1:5000"
+
+@app.post("/recommend")
+def recommend(req: RecommendRequest):
+    queries = {
+        "happy": ["happy pop music"],
+        "sad": ["sad songs playlist"],
+        "angry": ["angry workout music"],
+        "calm": ["chill lofi music"],
+    }.get(req.mood.lower(), ["top music hits"])
+
+    items = []
+
+    for q in queries:
+        r = requests.get(
+            f"{SERVER_BASE}/api/youtube/search",
+            params={"q": q},
+            timeout=10,
+        )
+        r.raise_for_status()
+        items.extend(r.json().get("items", []))
+
+    # remove duplicates
+    seen = set()
+    unique = []
+    for i in items:
+        vid = i.get("videoId")
+        if vid and vid not in seen:
+            seen.add(vid)
+            unique.append(i)
+
+    return {"items": unique[:15]}
