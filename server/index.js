@@ -1,6 +1,6 @@
 // server/index.js
 import dotenv from "dotenv";
-dotenv.config(); // 👈 MUST BE FIRST
+dotenv.config(); // MUST be first
 
 import express from "express";
 import cors from "cors";
@@ -19,6 +19,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 const PY_API_BASE = process.env.PY_API_BASE || "http://127.0.0.1:8000";
+const NODE_ENV = process.env.NODE_ENV || "development";
 
 /* ================= Debug ================= */
 console.log("YouTube API key loaded:", process.env.YOUTUBE_API_KEY ? "YES" : "NO");
@@ -26,31 +27,49 @@ console.log(
   "Google OAuth loaded:",
   process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? "YES" : "NO"
 );
+console.log("Environment:", NODE_ENV);
 
+/* ================= Trust Proxy (REQUIRED FOR RENDER) ================= */
+app.set("trust proxy", 1);
 
-/* ================= Middleware ================= */
+/* ================= CORS ================= */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  CLIENT_URL, // will be Vercel URL in production
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allow non-browser tools
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.log("❌ CORS blocked:", origin);
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
-
 app.use(express.json());
 app.use(cookieParser());
 
-// Session for storing OAuth tokens (DEV-friendly)
+/* ================= Session (PRODUCTION SAFE) ================= */
 app.use(
   session({
     name: "moodmirror.sid",
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
       httpOnly: true,
-      secure: false,      // MUST be false on localhost
-      sameSite: "lax",    // 🔥 THIS FIXES IT
+      secure: NODE_ENV === "production", // true on Render
+      sameSite: NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
   })
 );
@@ -77,8 +96,8 @@ app.use("/api/playlist", playlistRoutes);
 
 /* ================= Start Server ================= */
 app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
   console.log(`🎵 Music platform: YouTube`);
   console.log(`🧠 Python service: ${PY_API_BASE}`);
-  console.log(`🌐 Client: ${CLIENT_URL}`);
+  console.log(`🌐 Client allowed: ${CLIENT_URL}`);
 });
