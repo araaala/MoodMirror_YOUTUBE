@@ -1,5 +1,5 @@
 export default function Login() {
-  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+ const API_BASE = import.meta.env.VITE_SERVER_BASE;
 
   const handleLogin = () => {
     window.location.href = `${API_BASE}/api/auth/login`;

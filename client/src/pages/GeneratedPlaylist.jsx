@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import { moodConfig } from "../utils/moodConfig";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const API_BASE = import.meta.env.VITE_SERVER_BASE;
 
 export default function GeneratedPlaylist() {
   const { state } = useLocation();
