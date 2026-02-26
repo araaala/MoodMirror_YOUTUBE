@@ -20,6 +20,7 @@ const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 const PY_API_BASE = process.env.PY_API_BASE || "http://127.0.0.1:8000";
 const NODE_ENV = process.env.NODE_ENV || "development";
+const IS_PRODUCTION = NODE_ENV === "production";
 
 /* ================= Debug ================= */
 console.log("YouTube API key loaded:", process.env.YOUTUBE_API_KEY ? "YES" : "NO");
@@ -36,13 +37,13 @@ app.set("trust proxy", 1);
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  CLIENT_URL, // will be Vercel URL in production
+  CLIENT_URL, // Vercel in production
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // allow non-browser tools
+      if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       } else {
@@ -57,7 +58,7 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-/* ================= Session (PRODUCTION SAFE) ================= */
+/* ================= Session (FIXED FOR CROSS-DOMAIN) ================= */
 app.use(
   session({
     name: "moodmirror.sid",
@@ -67,8 +68,8 @@ app.use(
     proxy: true,
     cookie: {
       httpOnly: true,
-      secure: NODE_ENV === "production", // true on Render
-      sameSite: NODE_ENV === "production" ? "none" : "lax",
+      secure: true,           // MUST be true on Render (HTTPS)
+      sameSite: "none",       // REQUIRED for Vercel ↔ Render
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
   })
