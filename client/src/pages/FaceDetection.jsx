@@ -24,7 +24,7 @@ export default function FaceDetection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
- const PY_URL = import.meta.env.VITE_PY_API_BASE;
+const PY_URL = "https://moodmirror-youtube-pyservice.onrender.com";
 
 
   useEffect(() => {
