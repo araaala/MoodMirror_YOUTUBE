@@ -11,7 +11,7 @@ export default function Login() {
 
       <div className="text-center max-w-xl px-6">
         <img
-          src="/src/assets/moodmirror_logo.png"
+          src="/moodmirror-logo.png"
           alt="MoodMirror"
           className="mx-auto h-40 mb-6"
         />
