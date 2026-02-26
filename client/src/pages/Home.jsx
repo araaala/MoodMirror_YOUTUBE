@@ -19,7 +19,7 @@ export default function Home() {
       <div className="text-center max-w-xl px-6 animate-fadeIn">
 
         <img
-          src="/src/assets/moodmirror_logo.png"
+          src="/moodmirror_logo.png"
           alt="MoodMirror logo"
           className="mx-auto h-60 mb-8 drop-shadow-lg"
         />
