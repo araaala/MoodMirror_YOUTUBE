@@ -1,3 +1,13 @@
+# ================= FORCE TENSORFLOW INIT =================
+# This prevents DeepFace from crashing with:
+# ModuleNotFoundError: No module named 'tensorflow.keras'
+
+import tensorflow as tf
+import tensorflow.keras  # force keras namespace registration
+
+print("TensorFlow version:", tf.__version__)
+
+# ================= IMPORTS =================
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -7,9 +17,10 @@ import numpy as np
 import requests
 from deepface import DeepFace
 
+# ================= APP INIT =================
+
 app = FastAPI()
 
-# ✅ VERY IMPORTANT: allow ALL origins while developing
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -20,8 +31,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
 
 # ================= MODELS =================
 
@@ -38,11 +47,11 @@ def health():
     return {"status": "pyservice running"}
 
 # ================= FACE DETECTION =================
+
 @app.post("/detect")
 def detect(req: DetectRequest):
-    import numpy as np
-
     b64 = req.imageBase64
+
     if "," in b64:
         b64 = b64.split(",", 1)[1]
 
@@ -75,18 +84,18 @@ def detect(req: DetectRequest):
         confidence = float(emotions.get(dominant, 40)) / 100.0
 
         return {
-            "detectedMood": str(dominant),     # ✅ string
-            "confidence": float(confidence),   # ✅ python float
+            "detectedMood": str(dominant),
+            "confidence": float(confidence),
             "source": "deepface",
         }
 
-    except Exception:
+    except Exception as e:
+        print("DeepFace error:", str(e))
         return {
             "detectedMood": "neutral",
             "confidence": 0.4,
             "source": "deepface-error",
         }
-
 
 # ================= YOUTUBE RECOMMEND =================
 
@@ -112,9 +121,10 @@ def recommend(req: RecommendRequest):
         r.raise_for_status()
         items.extend(r.json().get("items", []))
 
-    # remove duplicates
+    # Remove duplicates
     seen = set()
     unique = []
+
     for i in items:
         vid = i.get("videoId")
         if vid and vid not in seen:
