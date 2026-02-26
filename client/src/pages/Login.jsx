@@ -12,13 +12,9 @@ export default function Login() {
       <div className="text-center max-w-xl px-6">
         <img
           src="/moodmirror-logo.png"
-          alt="MoodMirror"
-          className="mx-auto h-40 mb-6"
+          alt="MoodMirror logo"
+          className="mx-auto h-60 mb-8 drop-shadow-lg"
         />
-
-        <h1 className="text-5xl font-extrabold text-white drop-shadow mb-4">
-          MoodMirror
-        </h1>
 
         <p className="text-white/80 text-lg mb-10">
           Login with YouTube to generate a playlist that matches your mood.
