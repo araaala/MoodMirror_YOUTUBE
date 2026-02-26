@@ -67,11 +67,12 @@ app.use(
     saveUninitialized: false,
     proxy: true,
     cookie: {
-      httpOnly: true,
-      secure: true,           // MUST be true on Render (HTTPS)
-      sameSite: "none",       // REQUIRED for Vercel ↔ Render
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    },
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  domain: "moodmirror-youtube-backend.onrender.com",
+  maxAge: 1000 * 60 * 60 * 24 * 7,
+},
   })
 );
 
