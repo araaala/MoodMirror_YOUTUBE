@@ -67,12 +67,12 @@ app.use(
     saveUninitialized: false,
     proxy: true,
     cookie: {
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-  domain: "moodmirror-youtube-backend.onrender.com",
-  maxAge: 1000 * 60 * 60 * 24 * 7,
-},
+      httpOnly: true,
+      secure: IS_PRODUCTION,                 // ✅ only true in production
+      sameSite: IS_PRODUCTION ? "none" : "lax", // ✅ cross-site only in prod
+      // ✅ DO NOT set domain (let browser set host-only cookie)
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+    },
   })
 );
 
