@@ -34,23 +34,9 @@ console.log("Environment:", NODE_ENV);
 app.set("trust proxy", 1);
 
 /* ================= CORS ================= */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  CLIENT_URL, // Vercel in production
-].filter(Boolean);
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        console.log("❌ CORS blocked:", origin);
-        return callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: CLIENT_URL,
     credentials: true,
   })
 );
@@ -58,7 +44,7 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-/* ================= Session (FIXED FOR CROSS-DOMAIN) ================= */
+/* ================= Session ================= */
 app.use(
   session({
     name: "moodmirror.sid",
@@ -68,9 +54,8 @@ app.use(
     proxy: true,
     cookie: {
       httpOnly: true,
-      secure: IS_PRODUCTION,                 // ✅ only true in production
-      sameSite: IS_PRODUCTION ? "none" : "lax", // ✅ cross-site only in prod
-      // ✅ DO NOT set domain (let browser set host-only cookie)
+      secure: true,       // Always secure in production (Render is HTTPS)
+      sameSite: "none",   // Required for Vercel -> Render cross-site cookies
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   })
