@@ -31,21 +31,29 @@ function MoodButton({ moodKey, onClick }) {
 export default function MoodDetection() {
   const navigate = useNavigate();
 
-  /* 🔒 AUTH GUARD — ONLY ADDITION */
-  useEffect(() => {
-    fetch(`${API_BASE}/api/auth/status`, {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.loggedIn) {
-          navigate("/login");
-        }
-      })
-      .catch(() => {
-        navigate("/login");
+const [checkingAuth, setCheckingAuth] = React.useState(true);
+
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/status`, {
+        credentials: "include",
       });
-  }, [navigate]);
+
+      const data = await res.json();
+
+      if (!data.loggedIn) {
+        navigate("/login");
+      } else {
+        setCheckingAuth(false);
+      }
+    } catch (err) {
+      navigate("/login");
+    }
+  };
+
+  checkAuth();
+}, [navigate]);
 
   const handleManualMood = (mood) => {
     navigate("/playlist", {
@@ -59,6 +67,14 @@ export default function MoodDetection() {
   const goFaceDetection = () => {
     navigate("/face-detect");
   };
+
+  if (checkingAuth) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-black text-white">
+      Checking session...
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen relative overflow-hidden">
