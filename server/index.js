@@ -1,11 +1,11 @@
 // server/index.js
 import dotenv from "dotenv";
-dotenv.config(); // MUST be first
+dotenv.config();
 
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import session from "express-session";
+import cookieSession from "cookie-session";
 
 // Routes
 import youtubeRoutes from "./routes/youtube.js";
@@ -30,15 +30,11 @@ console.log(
 );
 console.log("Environment:", NODE_ENV);
 
-/* ================= Trust Proxy (REQUIRED FOR RENDER) ================= */
-app.set("trust proxy", 1);
-
 /* ================= Middleware ================= */
 app.use(express.json());
 app.use(cookieParser());
 
 /* ================= CORS ================= */
-// IMPORTANT: Must be the exact Vercel origin in prod, and localhost in dev
 app.use(
   cors({
     origin: CLIENT_URL,
@@ -47,26 +43,18 @@ app.use(
 );
 
 /* ================= Session ================= */
-// ✅ Works on localhost (HTTP) AND production (HTTPS)
 app.use(
-  session({
-    name: "moodmirror.sid",
-    secret: process.env.SESSION_SECRET || "dev-secret",
-    resave: false,
-    saveUninitialized: false,
-    proxy: true,
-    cookie: {
-      httpOnly: true,
-      secure: IS_PRODUCTION, // false on localhost, true on Render
-      sameSite: IS_PRODUCTION ? "none" : "lax",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    },
+  cookieSession({
+    name: "moodmirror-session",
+    keys: [process.env.SESSION_SECRET || "dev-secret"],
+    maxAge: 1000 * 60 * 60 * 24 * 7,
+    secure: IS_PRODUCTION,
+    sameSite: IS_PRODUCTION ? "none" : "lax",
   })
 );
 
 /* ================= Routes ================= */
 
-// Health check
 app.get("/health", (req, res) => {
   res.json({
     status: "Server is running",
@@ -75,12 +63,10 @@ app.get("/health", (req, res) => {
   });
 });
 
-// API routes
 app.use("/api/youtube", youtubeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/playlist", playlistRoutes);
 
-/* ================= Start Server ================= */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🎵 Music platform: YouTube`);

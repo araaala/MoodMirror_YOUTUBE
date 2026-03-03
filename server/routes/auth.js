@@ -14,7 +14,9 @@ const PROD_REDIRECT_URI =
 const DEV_REDIRECT_URI = "http://localhost:5000/api/auth/callback";
 
 const REDIRECT_URI =
-  process.env.NODE_ENV === "production" ? PROD_REDIRECT_URI : DEV_REDIRECT_URI;
+  process.env.NODE_ENV === "production"
+    ? PROD_REDIRECT_URI
+    : DEV_REDIRECT_URI;
 
 const SCOPES = ["https://www.googleapis.com/auth/youtube"];
 
@@ -28,25 +30,15 @@ function createOAuthClient() {
 
 /* ================= LOGIN ================= */
 router.get("/login", (req, res) => {
-  // ✅ Force session cookie to be issued before leaving to Google
-  req.session.oauthStart = Date.now();
+  const oauth2Client = createOAuthClient();
 
-  req.session.save((saveErr) => {
-    if (saveErr) {
-      console.error("❌ Session pre-save failed:", saveErr);
-      return res.redirect(`${CLIENT_URL}/login?error=session_presave_failed`);
-    }
-
-    const oauth2Client = createOAuthClient();
-
-    const url = oauth2Client.generateAuthUrl({
-      access_type: "offline",
-      prompt: "consent",
-      scope: SCOPES,
-    });
-
-    return res.redirect(url);
+  const url = oauth2Client.generateAuthUrl({
+    access_type: "offline",
+    prompt: "consent",
+    scope: SCOPES,
   });
+
+  return res.redirect(url);
 });
 
 /* ================= CALLBACK ================= */
@@ -67,28 +59,24 @@ router.get("/callback", async (req, res) => {
       return res.redirect(`${CLIENT_URL}/login?error=no_tokens`);
     }
 
-    // ✅ Store tokens in session
+    // ✅ Store tokens in cookie-session
     req.session.tokens = tokens;
 
-    // ✅ Ensure session is saved before redirect
-    req.session.save((err) => {
-      if (err) {
-        console.error("❌ Session save failed:", err);
-        return res.redirect(`${CLIENT_URL}/login?error=session_save_failed`);
-      }
-      return res.redirect(`${CLIENT_URL}/mood`);
-    });
+    return res.redirect(`${CLIENT_URL}/mood`);
   } catch (err) {
-    console.error("❌ OAuth callback error:", err?.response?.data || err?.message || err);
+    console.error(
+      "❌ OAuth callback error:",
+      err?.response?.data || err?.message || err
+    );
     return res.redirect(`${CLIENT_URL}/login?error=oauth_failed`);
   }
 });
 
 /* ================= LOGOUT ================= */
 router.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.json({ ok: true });
-  });
+  // cookie-session clears session this way
+  req.session = null;
+  res.json({ ok: true });
 });
 
 /* ================= STATUS ================= */
