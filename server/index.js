@@ -33,7 +33,12 @@ console.log("Environment:", NODE_ENV);
 /* ================= Trust Proxy (REQUIRED FOR RENDER) ================= */
 app.set("trust proxy", 1);
 
+/* ================= Middleware ================= */
+app.use(express.json());
+app.use(cookieParser());
+
 /* ================= CORS ================= */
+// IMPORTANT: Must be the exact Vercel origin in prod, and localhost in dev
 app.use(
   cors({
     origin: CLIENT_URL,
@@ -41,21 +46,19 @@ app.use(
   })
 );
 
-app.use(express.json());
-app.use(cookieParser());
-
 /* ================= Session ================= */
+// ✅ Works on localhost (HTTP) AND production (HTTPS)
 app.use(
   session({
     name: "moodmirror.sid",
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || "dev-secret",
     resave: false,
     saveUninitialized: false,
     proxy: true,
     cookie: {
       httpOnly: true,
-      secure: true,       // Always secure in production (Render is HTTPS)
-      sameSite: "none",   // Required for Vercel -> Render cross-site cookies
+      secure: IS_PRODUCTION, // false on localhost, true on Render
+      sameSite: IS_PRODUCTION ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   })
@@ -72,13 +75,9 @@ app.get("/health", (req, res) => {
   });
 });
 
-// YouTube search routes (API key)
+// API routes
 app.use("/api/youtube", youtubeRoutes);
-
-// OAuth routes
 app.use("/api/auth", authRoutes);
-
-// Playlist routes (OAuth required)
 app.use("/api/playlist", playlistRoutes);
 
 /* ================= Start Server ================= */

@@ -7,8 +7,13 @@ export default function Header({ step }) {
     <header className="px-6 py-2">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
 
-        <div className="flex items-center gap-4">
-          <img src="/moodmirror-logo.png" alt="MoodMirror" />
+        <div className="h-12 w-12 shrink-0">
+  <img
+  src="/moodmirror-logo.png"
+  alt="MoodMirror"
+  className="h-12 w-auto object-contain shrink-0"
+/>
+</div>
 
           {step && (
             <div className="text-white/70 text-sm uppercase tracking-wider">
