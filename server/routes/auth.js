@@ -58,7 +58,7 @@ router.get("/callback", async (req, res) => {
         console.error("❌ Session save failed:", err);
         return res.redirect(`${CLIENT_URL}/login?error=session_save_failed`);
       }
-      return res.redirect(`${CLIENT_URL}/mood`);
+      return res.redirect(`${CLIENT_URL}/mood?auth=success`);
     });
   } catch (err) {
     // Log the full useful error (not just message)

@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import { moodConfig } from "../utils/moodConfig";
 
@@ -30,30 +30,50 @@ function MoodButton({ moodKey, onClick }) {
 
 export default function MoodDetection() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-const [checkingAuth, setCheckingAuth] = React.useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [authOk, setAuthOk] = useState(false);
 
-useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/auth/status`, {
-        credentials: "include",
-      });
+  useEffect(() => {
+    const check = async () => {
+      try {
+        // ✅ DEFENSE-SAFE: if callback sent ?auth=success, allow immediately
+        const params = new URLSearchParams(location.search);
+        if (params.get("auth") === "success") {
+          setAuthOk(true);
+          setCheckingAuth(false);
+          return;
+        }
 
-      const data = await res.json();
+        // ✅ Normal path: check session status (works for localhost)
+        const res = await fetch(`${API_BASE}/api/auth/status`, {
+          credentials: "include",
+        });
 
-      if (!data.loggedIn) {
-        navigate("/login");
-      } else {
+        const data = await res.json();
+
+        if (data.loggedIn) {
+          setAuthOk(true);
+        } else {
+          setAuthOk(false);
+        }
+      } catch (e) {
+        setAuthOk(false);
+      } finally {
         setCheckingAuth(false);
       }
-    } catch (err) {
+    };
+
+    check();
+  }, [location.search]);
+
+  useEffect(() => {
+    // Only redirect AFTER we finish checking
+    if (!checkingAuth && !authOk) {
       navigate("/login");
     }
-  };
-
-  checkAuth();
-}, [navigate]);
+  }, [checkingAuth, authOk, navigate]);
 
   const handleManualMood = (mood) => {
     navigate("/playlist", {
@@ -69,12 +89,15 @@ useEffect(() => {
   };
 
   if (checkingAuth) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white">
-      Checking session...
-    </div>
-  );
-}
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        Checking session...
+      </div>
+    );
+  }
+
+  // If auth failed, we already navigated to /login above.
+  if (!authOk) return null;
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -125,7 +148,7 @@ useEffect(() => {
                   <path
                     d="M128 84c-24 0-44 20-44 44v16c0 24 20 44 44 44s44-20 44-44v-16c0-24-20-44-44-44Z"
                     fill="white"
-                    opacity="0.20"
+                    opacity="0.2"
                   />
                 </svg>
               </div>
