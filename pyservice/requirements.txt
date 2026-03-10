@@ -4,7 +4,7 @@ gunicorn==21.2.0
 
 deepface==0.0.96
 
-tensorflow-cpu==2.15.0
+tensorflow==2.15.0
 keras==2.15.0
 numpy==1.26.4
 opencv-python==4.8.1.78
@@ -15,3 +15,4 @@ retina-face==0.0.17
 pillow
 pandas
 requests
+
