@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import { moodConfig } from "../utils/moodConfig";
 
@@ -30,51 +30,39 @@ function MoodButton({ moodKey, onClick }) {
 
 export default function MoodDetection() {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [authOk, setAuthOk] = useState(false);
 
-  /* DATA PRIVACY MODAL */
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
+  /* ================= AUTH CHECK ================= */
   useEffect(() => {
-    const check = async () => {
+    async function checkAuth() {
       try {
-        const params = new URLSearchParams(location.search);
-
-        if (params.get("auth") === "success") {
-          setAuthOk(true);
-          setCheckingAuth(false);
-          return;
-        }
-
         const res = await fetch(`${API_BASE}/api/auth/status`, {
           credentials: "include",
         });
 
         const data = await res.json();
 
+        console.log("Auth status:", data);
+
         if (data.loggedIn) {
           setAuthOk(true);
         } else {
-          setAuthOk(false);
+          navigate("/login");
         }
-      } catch (e) {
-        setAuthOk(false);
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        navigate("/login");
       } finally {
         setCheckingAuth(false);
       }
-    };
-
-    check();
-  }, [location.search]);
-
-  useEffect(() => {
-    if (!checkingAuth && !authOk) {
-      navigate("/login");
     }
-  }, [checkingAuth, authOk, navigate]);
+
+    checkAuth();
+  }, [navigate]);
 
   const handleManualMood = (mood) => {
     navigate("/playlist", {
@@ -85,12 +73,10 @@ export default function MoodDetection() {
     });
   };
 
-  /* USER CLICKED FACE DETECTION */
   const goFaceDetection = () => {
     setShowPrivacyModal(true);
   };
 
-  /* USER ACCEPTED PRIVACY */
   const acceptPrivacy = () => {
     setShowPrivacyModal(false);
     navigate("/face-detect");
@@ -114,7 +100,7 @@ export default function MoodDetection() {
         <Header step="Mood Detection" />
 
         <main className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          
+
           {/* ================= MANUAL ================= */}
           <section>
             <h2 className="text-center text-white/80 text-3xl font-bold mb-6">
@@ -153,11 +139,6 @@ export default function MoodDetection() {
                     strokeLinecap="round"
                     fill="none"
                   />
-                  <path
-                    d="M128 84c-24 0-44 20-44 44v16c0 24 20 44 44 44s44-20 44-44v-16c0-24-44-44-44-44Z"
-                    fill="white"
-                    opacity="0.2"
-                  />
                 </svg>
               </div>
 
@@ -166,6 +147,7 @@ export default function MoodDetection() {
               </div>
             </button>
           </section>
+
         </main>
       </div>
 
@@ -185,10 +167,6 @@ export default function MoodDetection() {
               No facial images are stored or transmitted to external databases.
               The captured image is processed temporarily for emotion detection
               and immediately discarded after analysis.
-              <br /><br />
-              By continuing, you consent to the temporary processing of your
-              facial image for emotion detection in accordance with the
-              Philippine Data Privacy Act of 2012 (RA 10173).
             </p>
 
             <div className="flex justify-end gap-3">
