@@ -62,7 +62,7 @@ router.get("/callback", async (req, res) => {
     // ✅ Store tokens in cookie-session
     req.session.tokens = tokens;
 
-    return res.redirect(`${CLIENT_URL}/mood`);
+    return res.redirect(`${CLIENT_URL}/mood?auth=success`);
   } catch (err) {
     console.error(
       "❌ OAuth callback error:",

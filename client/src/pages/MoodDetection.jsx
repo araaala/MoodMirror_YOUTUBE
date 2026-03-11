@@ -37,32 +37,46 @@ export default function MoodDetection() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   /* ================= AUTH CHECK ================= */
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const res = await fetch(`${API_BASE}/api/auth/status`, {
-          credentials: "include",
-        });
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
 
-        const data = await res.json();
-
-        console.log("Auth status:", data);
-
-        if (data.loggedIn) {
-          setAuthOk(true);
-        } else {
-          navigate("/login");
-        }
-      } catch (err) {
-        console.error("Auth check failed:", err);
-        navigate("/login");
-      } finally {
+      // If we just returned from OAuth, trust it once
+      if (params.get("auth") === "success") {
+        console.log("OAuth redirect confirmed");
+        setAuthOk(true);
         setCheckingAuth(false);
-      }
-    }
 
-    checkAuth();
-  }, [navigate]);
+        // remove query param so refresh works cleanly
+        window.history.replaceState({}, "", "/mood");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/api/auth/status`, {
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      console.log("Auth status:", data);
+
+      if (!data.loggedIn) {
+        navigate("/login");
+        return;
+      }
+
+      setAuthOk(true);
+    } catch (err) {
+      console.error("Auth check failed:", err);
+      navigate("/login");
+    } finally {
+      setCheckingAuth(false);
+    }
+  };
+
+  checkAuth();
+}, [navigate]);
 
   const handleManualMood = (mood) => {
     navigate("/playlist", {
