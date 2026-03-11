@@ -55,9 +55,11 @@ app.use(
     keys: [process.env.SESSION_SECRET],
     maxAge: 24 * 60 * 60 * 1000,
 
-    // IMPORTANT for cross-domain cookies
     sameSite: IS_PRODUCTION ? "none" : "lax",
-    secure: IS_PRODUCTION, // true on Render, false locally
+    secure: IS_PRODUCTION,
+
+    // ⭐ IMPORTANT
+    domain: IS_PRODUCTION ? ".onrender.com" : undefined
   })
 );
 
