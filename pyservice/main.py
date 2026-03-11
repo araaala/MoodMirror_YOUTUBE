@@ -17,14 +17,8 @@ import numpy as np
 import requests
 from deepface import DeepFace
 
-# ================= PRELOAD MODEL =================
-# Load DeepFace emotion model once when server starts
-
-print("Loading DeepFace emotion model...")
-DeepFace.build_model("Emotion")
-print("DeepFace emotion model loaded.")
-
 # ================= FACE DETECTOR =================
+
 face_cascade = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 )
@@ -33,11 +27,21 @@ face_cascade = cv2.CascadeClassifier(
 
 app = FastAPI()
 
+# Load DeepFace model once when server starts
+@app.on_event("startup")
+def load_model():
+    print("Loading DeepFace emotion model...")
+    DeepFace.build_model("Emotion")
+    print("DeepFace emotion model loaded.")
+
+# ================= CORS =================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "https://moodmirror-youtube-frontend.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -69,7 +73,6 @@ def detect(req: DetectRequest):
     try:
         b64 = req.imageBase64
 
-        # Remove data URL prefix
         if "," in b64:
             b64 = b64.split(",", 1)[1]
 
@@ -99,8 +102,6 @@ def detect(req: DetectRequest):
                 "source": "invalid-image",
             }
 
-        # ================= FACE DETECTION =================
-
         gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
 
         faces = face_cascade.detectMultiScale(
@@ -117,13 +118,9 @@ def detect(req: DetectRequest):
                 "source": "no-face",
             }
 
-        # Crop first detected face
         x, y, w, h = faces[0]
         face_img = img_bgr[y:y+h, x:x+w]
-
         face_rgb = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
-
-        # ================= EMOTION DETECTION =================
 
         result = DeepFace.analyze(
             img_path=face_rgb,
@@ -185,7 +182,6 @@ def recommend(req: RecommendRequest):
 
         items.extend(r.json().get("items", []))
 
-    # Remove duplicates
     seen = set()
     unique = []
 
