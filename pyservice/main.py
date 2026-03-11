@@ -17,6 +17,20 @@ import numpy as np
 import requests
 from deepface import DeepFace
 
+# ================= MODEL CACHE =================
+
+emotion_model = None
+
+def get_emotion_model():
+    global emotion_model
+
+    if emotion_model is None:
+        print("Loading DeepFace emotion model (first request)...")
+        emotion_model = DeepFace.build_model("Emotion")
+        print("DeepFace emotion model loaded.")
+
+    return emotion_model
+
 # ================= FACE DETECTOR =================
 
 face_cascade = cv2.CascadeClassifier(
@@ -30,16 +44,8 @@ app = FastAPI()
 # Global variable to store model
 emotion_model = None
 
-# Load DeepFace model safely on startup
-@app.on_event("startup")
-def load_model():
-    global emotion_model
-    try:
-        print("Loading DeepFace emotion model...")
-        emotion_model = DeepFace.build_model("Emotion")
-        print("DeepFace emotion model loaded.")
-    except Exception as e:
-        print("DeepFace startup error:", str(e))
+
+
 
 # ================= CORS =================
 
@@ -129,11 +135,14 @@ def detect(req: DetectRequest):
         face_img = img_bgr[y:y+h, x:x+w]
         face_rgb = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
 
+        model = get_emotion_model()
+
         result = DeepFace.analyze(
             img_path=face_rgb,
             actions=["emotion"],
             enforce_detection=False,
             detector_backend="opencv",
+            models={"emotion": model}
         )
 
         if isinstance(result, list):
