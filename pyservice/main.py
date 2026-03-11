@@ -27,12 +27,19 @@ face_cascade = cv2.CascadeClassifier(
 
 app = FastAPI()
 
-# Load DeepFace model once when server starts
+# Global variable to store model
+emotion_model = None
+
+# Load DeepFace model safely on startup
 @app.on_event("startup")
 def load_model():
-    print("Loading DeepFace emotion model...")
-    DeepFace.build_model("Emotion")
-    print("DeepFace emotion model loaded.")
+    global emotion_model
+    try:
+        print("Loading DeepFace emotion model...")
+        emotion_model = DeepFace.build_model("Emotion")
+        print("DeepFace emotion model loaded.")
+    except Exception as e:
+        print("DeepFace startup error:", str(e))
 
 # ================= CORS =================
 
@@ -155,7 +162,7 @@ def detect(req: DetectRequest):
 
 # ================= YOUTUBE RECOMMEND =================
 
-SERVER_BASE = "http://127.0.0.1:5000"
+SERVER_BASE = "https://moodmirror-youtube-backend.onrender.com"
 
 
 @app.post("/recommend")
