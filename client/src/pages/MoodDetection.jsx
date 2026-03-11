@@ -35,18 +35,20 @@ export default function MoodDetection() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [authOk, setAuthOk] = useState(false);
 
+  /* DATA PRIVACY MODAL */
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
   useEffect(() => {
     const check = async () => {
       try {
-        // ✅ DEFENSE-SAFE: if callback sent ?auth=success, allow immediately
         const params = new URLSearchParams(location.search);
+
         if (params.get("auth") === "success") {
           setAuthOk(true);
           setCheckingAuth(false);
           return;
         }
 
-        // ✅ Normal path: check session status (works for localhost)
         const res = await fetch(`${API_BASE}/api/auth/status`, {
           credentials: "include",
         });
@@ -69,7 +71,6 @@ export default function MoodDetection() {
   }, [location.search]);
 
   useEffect(() => {
-    // Only redirect AFTER we finish checking
     if (!checkingAuth && !authOk) {
       navigate("/login");
     }
@@ -84,7 +85,14 @@ export default function MoodDetection() {
     });
   };
 
+  /* USER CLICKED FACE DETECTION */
   const goFaceDetection = () => {
+    setShowPrivacyModal(true);
+  };
+
+  /* USER ACCEPTED PRIVACY */
+  const acceptPrivacy = () => {
+    setShowPrivacyModal(false);
     navigate("/face-detect");
   };
 
@@ -96,7 +104,6 @@ export default function MoodDetection() {
     );
   }
 
-  // If auth failed, we already navigated to /login above.
   if (!authOk) return null;
 
   return (
@@ -107,6 +114,7 @@ export default function MoodDetection() {
         <Header step="Mood Detection" />
 
         <main className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          
           {/* ================= MANUAL ================= */}
           <section>
             <h2 className="text-center text-white/80 text-3xl font-bold mb-6">
@@ -146,7 +154,7 @@ export default function MoodDetection() {
                     fill="none"
                   />
                   <path
-                    d="M128 84c-24 0-44 20-44 44v16c0 24 20 44 44 44s44-20 44-44v-16c0-24-20-44-44-44Z"
+                    d="M128 84c-24 0-44 20-44 44v16c0 24 20 44 44 44s44-20 44-44v-16c0-24-44-44-44-44Z"
                     fill="white"
                     opacity="0.2"
                   />
@@ -160,6 +168,48 @@ export default function MoodDetection() {
           </section>
         </main>
       </div>
+
+      {/* ================= DATA PRIVACY MODAL ================= */}
+      {showPrivacyModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-6">
+          <div className="bg-white max-w-lg rounded-2xl p-8 shadow-2xl">
+
+            <h2 className="text-xl font-bold mb-4 text-gray-800">
+              Data Privacy Notice
+            </h2>
+
+            <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              MoodMirror uses your device camera to analyze facial expressions
+              in order to detect emotional states and recommend music playlists.
+              <br /><br />
+              No facial images are stored or transmitted to external databases.
+              The captured image is processed temporarily for emotion detection
+              and immediately discarded after analysis.
+              <br /><br />
+              By continuing, you consent to the temporary processing of your
+              facial image for emotion detection in accordance with the
+              Philippine Data Privacy Act of 2012 (RA 10173).
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowPrivacyModal(false)}
+                className="px-4 py-2 bg-gray-300 rounded-lg"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={acceptPrivacy}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg"
+              >
+                I Agree
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

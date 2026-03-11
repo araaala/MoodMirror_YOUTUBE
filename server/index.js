@@ -42,14 +42,19 @@ app.use(
   })
 );
 
+/* ================= Trust Proxy (Render fix) ================= */
+app.set("trust proxy", 1);
+
 /* ================= Session ================= */
 app.use(
   cookieSession({
     name: "moodmirror-session",
-    keys: [process.env.SESSION_SECRET || "dev-secret"],
-    maxAge: 1000 * 60 * 60 * 24 * 7,
-    secure: IS_PRODUCTION,
+    keys: [process.env.SESSION_SECRET],
+    maxAge: 24 * 60 * 60 * 1000,
+
+    // IMPORTANT for cross-domain cookies
     sameSite: IS_PRODUCTION ? "none" : "lax",
+    secure: IS_PRODUCTION, // true on Render, false locally
   })
 );
 
@@ -67,6 +72,7 @@ app.use("/api/youtube", youtubeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/playlist", playlistRoutes);
 
+/* ================= Start Server ================= */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🎵 Music platform: YouTube`);
