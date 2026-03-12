@@ -48,15 +48,13 @@ app.use(
 /* ================= Trust Proxy (Render fix) ================= */
 app.set("trust proxy", 1);
 
-/* ================= Session ================= */
 app.use(
   cookieSession({
     name: "moodmirror-session",
     keys: [process.env.SESSION_SECRET],
     maxAge: 24 * 60 * 60 * 1000,
-
-    sameSite: IS_PRODUCTION ? "none" : "lax",
-    secure: IS_PRODUCTION
+    sameSite: "none",
+    secure: true,
   })
 );
 
