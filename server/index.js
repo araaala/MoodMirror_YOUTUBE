@@ -36,6 +36,12 @@ app.set("trust proxy", 1);
 app.use(express.json());
 app.use(cookieParser());
 
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
 /* ================= CORS ================= */
 app.use(
   cors({
@@ -50,9 +56,12 @@ app.use(
     name: "moodmirror-session",
     keys: [process.env.SESSION_SECRET],
     maxAge: 24 * 60 * 60 * 1000,
+
     sameSite: "none",
     secure: true,
-    httpOnly: true
+
+    httpOnly: true,
+    signed: true,
   })
 );
 
