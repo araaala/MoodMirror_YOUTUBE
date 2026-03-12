@@ -56,10 +56,7 @@ app.use(
     maxAge: 24 * 60 * 60 * 1000,
 
     sameSite: IS_PRODUCTION ? "none" : "lax",
-    secure: IS_PRODUCTION,
-
-    // ⭐ IMPORTANT
-    domain: IS_PRODUCTION ? ".onrender.com" : undefined
+    secure: IS_PRODUCTION
   })
 );
 
