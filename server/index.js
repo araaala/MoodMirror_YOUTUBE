@@ -20,7 +20,6 @@ const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 const PY_API_BASE = process.env.PY_API_BASE || "http://127.0.0.1:8000";
 const NODE_ENV = process.env.NODE_ENV || "development";
-const IS_PRODUCTION = NODE_ENV === "production";
 
 /* ================= Debug ================= */
 console.log("YouTube API key loaded:", process.env.YOUTUBE_API_KEY ? "YES" : "NO");
@@ -30,6 +29,9 @@ console.log(
 );
 console.log("Environment:", NODE_ENV);
 
+/* ================= Trust Proxy (Render fix) ================= */
+app.set("trust proxy", 1);
+
 /* ================= Middleware ================= */
 app.use(express.json());
 app.use(cookieParser());
@@ -37,17 +39,12 @@ app.use(cookieParser());
 /* ================= CORS ================= */
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-      "https://moodmirror-youtube-frontend.onrender.com",
-    ],
+    origin: CLIENT_URL,
     credentials: true,
   })
 );
-/* ================= Trust Proxy (Render fix) ================= */
-app.set("trust proxy", 1);
 
+/* ================= Session ================= */
 app.use(
   cookieSession({
     name: "moodmirror-session",
@@ -58,8 +55,15 @@ app.use(
   })
 );
 
-/* ================= Routes ================= */
+/* ================= Debug Endpoint ================= */
+app.get("/api/debug-session", (req, res) => {
+  res.json({
+    hasSession: !!req.session,
+    hasTokens: !!req.session?.tokens,
+  });
+});
 
+/* ================= Health ================= */
 app.get("/health", (req, res) => {
   res.json({
     status: "Server is running",
@@ -68,6 +72,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+/* ================= Routes ================= */
 app.use("/api/youtube", youtubeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/playlist", playlistRoutes);

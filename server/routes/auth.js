@@ -59,8 +59,11 @@ router.get("/callback", async (req, res) => {
       return res.redirect(`${CLIENT_URL}/login?error=no_tokens`);
     }
 
-    // ✅ Store tokens in cookie-session
+    // ✅ Ensure session exists before storing tokens
+    req.session = req.session || {};
     req.session.tokens = tokens;
+
+    console.log("✅ OAuth tokens stored in session");
 
     return res.redirect(`${CLIENT_URL}/mood?auth=success`);
   } catch (err) {
@@ -74,14 +77,15 @@ router.get("/callback", async (req, res) => {
 
 /* ================= LOGOUT ================= */
 router.get("/logout", (req, res) => {
-  // cookie-session clears session this way
   req.session = null;
   res.json({ ok: true });
 });
 
 /* ================= STATUS ================= */
 router.get("/status", (req, res) => {
-  res.json({ loggedIn: !!req.session?.tokens });
+  res.json({
+    loggedIn: !!req.session?.tokens,
+  });
 });
 
 export default router;
