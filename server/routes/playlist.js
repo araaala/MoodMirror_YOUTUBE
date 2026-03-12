@@ -12,10 +12,20 @@ const playlistStore = {};
 
 /* ================= AUTH ================= */
 function requireAuth(req, res, next) {
+
+  // DEBUG: see what session contains
+  console.log("🍪 Cookies:", req.headers.cookie);
+  console.log("🧠 Session:", req.session);
+  console.log("🔑 Tokens:", req.session?.tokens);
+
   if (process.env.DEMO_MODE === "true") return next();
-  if (!req.session?.tokens?.access_token) {
+
+  if (!req.session || !req.session.tokens || !req.session.tokens.access_token) {
+    console.log("❌ No YouTube session found");
     return res.status(401).json({ error: "Not logged in with YouTube" });
   }
+
+  console.log("✅ YouTube session verified");
   next();
 }
 
@@ -24,23 +34,40 @@ function getYoutubeClient(tokens) {
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
   );
+
   auth.setCredentials(tokens);
-  return google.youtube({ version: "v3", auth });
+
+  return google.youtube({
+    version: "v3",
+    auth,
+  });
 }
 
 /* ================= GENERATE ================= */
 router.post("/generate", requireAuth, async (req, res) => {
+
+  console.log("🎵 /generate called");
+  console.log("Session tokens present:", !!req.session?.tokens);
+
   const { mood } = req.body;
-  if (!mood) return res.status(400).json({ error: "Missing mood" });
+
+  if (!mood) {
+    return res.status(400).json({ error: "Missing mood" });
+  }
 
   try {
+
     let ranked;
 
     /* ===== CACHE ===== */
     if (moodCache[mood]) {
+
       ranked = moodCache[mood];
+
     } else {
+
       console.log(`🆕 Generating results for mood: ${mood}`);
+
       ranked = await searchAndRankVideos({
         mood,
         apiKey: process.env.YOUTUBE_API_KEY,
@@ -63,6 +90,7 @@ router.post("/generate", requireAuth, async (req, res) => {
 
     /* ===== IF ALREADY 2 PLAYLISTS → RETURN RANDOM ONE ===== */
     if (playlistStore[mood].length >= MAX_PLAYLISTS_PER_MOOD) {
+
       const reused =
         playlistStore[mood][
           Math.floor(Math.random() * playlistStore[mood].length)
@@ -87,15 +115,18 @@ router.post("/generate", requireAuth, async (req, res) => {
           title: `MoodMirror | ${mood.toUpperCase()} (${new Date().toLocaleDateString()})`,
           description: `AI-generated ${mood} playlist created by MoodMirror.`,
         },
-        status: { privacyStatus: "unlisted" },
+        status: {
+          privacyStatus: "unlisted",
+        },
       },
     });
 
     const playlistId = playlistRes.data.id;
 
-    /* ===== INSERT VIDEOS SAFELY ===== */
+    /* ===== INSERT VIDEOS ===== */
     for (const v of chosen) {
       try {
+
         await youtube.playlistItems.insert({
           part: ["snippet"],
           requestBody: {
@@ -108,8 +139,11 @@ router.post("/generate", requireAuth, async (req, res) => {
             },
           },
         });
+
       } catch (insertErr) {
+
         console.log("⚠️ Skipped video:", v.videoId);
+
       }
     }
 
@@ -135,9 +169,18 @@ router.post("/generate", requireAuth, async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Generate playlist error:", err?.response?.data || err.message);
-    return res.status(500).json({ error: "Failed to generate playlist" });
+
+    console.error(
+      "Generate playlist error:",
+      err?.response?.data || err.message
+    );
+
+    return res.status(500).json({
+      error: "Failed to generate playlist",
+    });
+
   }
+
 });
 
 export default router;
